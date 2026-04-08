@@ -3,9 +3,28 @@
   "displayName": "Flutter Generate Assets",
   "description": "Auto-generate Dart asset constants from Flutter project assets",
   "version": "0.0.1",
-  "engines": { "vscode": "^1.85.0" },
-  "categories": ["Other"],
-  "activationEvents": ["workspaceContains:pubspec.yaml"],
+  "publisher": "ceeyang",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/ceeyang/flutter_generate_assets.git"
+  },
+  "keywords": [
+    "flutter",
+    "dart",
+    "assets",
+    "generator",
+    "codegen"
+  ],
+  "engines": {
+    "vscode": "^1.85.0"
+  },
+  "categories": [
+    "Other"
+  ],
+  "activationEvents": [
+    "workspaceContains:pubspec.yaml"
+  ],
   "main": "./dist/extension.js",
   "contributes": {
     "commands": [
@@ -52,7 +71,9 @@
     "build": "node esbuild.js",
     "watch": "node esbuild.js --watch",
     "typecheck": "tsc --noEmit",
-    "test": "jest"
+    "test": "jest",
+    "package": "vsce package",
+    "deploy": "vsce publish"
   },
   "dependencies": {
     "js-yaml": "^4.1.0"
@@ -62,6 +83,7 @@
     "@types/js-yaml": "^4.0.9",
     "@types/node": "^20.0.0",
     "@types/vscode": "^1.85.0",
+    "@vscode/vsce": "^3.7.1",
     "esbuild": "^0.20.0",
     "jest": "^29.5.0",
     "ts-jest": "^29.1.0",
