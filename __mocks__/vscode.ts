@@ -39,13 +39,13 @@ const vscode = {
   MarkdownString: class {
     value = '';
     isTrusted = false;
-    supportHtml = false;
+    baseUri: unknown = undefined;
     appendMarkdown(s: string) { this.value += s; return this; }
   },
   Uri: {
     file: jest.fn((p: string) => ({
       fsPath: p,
-      toString: () => `file://${p}`,
+      toString: () => `file:///${p.replace(/\\/g, '/').replace(/^\//, '')}`,
     })),
   },
   Disposable: class {

@@ -1,4 +1,5 @@
 import * as vscode from 'vscode';
+import * as fs from 'fs';
 import * as path from 'path';
 
 const IMAGE_EXTENSIONS = new Set(['.png', '.jpg', '.jpeg', '.gif', '.webp', '.svg']);
@@ -19,13 +20,14 @@ export class AssetHoverProvider implements vscode.HoverProvider {
 
     const markdown = new vscode.MarkdownString();
     markdown.isTrusted = true;
-    markdown.supportHtml = true;
+    markdown.baseUri = vscode.Uri.file(workspaceRoot + '/');
 
     const ext = path.extname(assetPath).toLowerCase();
     if (IMAGE_EXTENSIONS.has(ext)) {
       const absPath = path.join(workspaceRoot, assetPath);
-      const uri = vscode.Uri.file(absPath);
-      markdown.appendMarkdown(`![preview](${uri.toString()})\n\n`);
+      if (fs.existsSync(absPath)) {
+        markdown.appendMarkdown(`![preview](${assetPath})\n\n`);
+      }
     }
 
     markdown.appendMarkdown(`\`${assetPath}\``);
