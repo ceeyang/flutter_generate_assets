@@ -6,6 +6,10 @@ jest.mock('fs');
 const mockReadFileSync = fs.readFileSync as jest.Mock;
 
 describe('readPubspec', () => {
+  beforeEach(() => {
+    jest.clearAllMocks();
+  });
+
   it('returns defaults when generate_assets is not configured', () => {
     mockReadFileSync.mockReturnValue(`
 name: my_app
@@ -50,7 +54,7 @@ flutter:
     mockReadFileSync.mockReturnValue('flutter:\n');
     readPubspec('/my/project');
     expect(mockReadFileSync).toHaveBeenCalledWith(
-      expect.stringContaining('pubspec.yaml'),
+      '/my/project/pubspec.yaml',
       'utf-8'
     );
   });

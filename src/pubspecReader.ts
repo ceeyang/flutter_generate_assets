@@ -16,9 +16,15 @@ export function readPubspec(workspaceRoot: string): PubspecConfig {
   const flutter = (doc?.flutter as Record<string, unknown>) ?? {};
   const generateAssets = (flutter?.generate_assets as Record<string, unknown>) ?? {};
 
+  const rawAssets = flutter?.assets;
+
   return {
-    output: (generateAssets.output as string) ?? 'generated/assets.dart',
-    className: (generateAssets.class_name as string) ?? 'Assets',
-    assetPaths: ((flutter?.assets as string[]) ?? []),
+    output: typeof generateAssets.output === 'string'
+      ? generateAssets.output
+      : 'generated/assets.dart',
+    className: typeof generateAssets.class_name === 'string'
+      ? generateAssets.class_name
+      : 'Assets',
+    assetPaths: Array.isArray(rawAssets) ? (rawAssets as string[]) : [],
   };
 }
