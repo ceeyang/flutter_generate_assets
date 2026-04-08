@@ -15,7 +15,7 @@ export function toVariableName(filePath: string): string {
   return /^\d/.test(camel) ? 'a' + camel : camel;
 }
 
-export function generateDartCode(className: string, assets: string[]): string {
+export function generateDartCode(className = 'Assets', assets: string[]): string {
   const seen = new Map<string, number>();
   const lines: string[] = [
     '// GENERATED CODE - DO NOT MODIFY BY HAND',
@@ -27,15 +27,22 @@ export function generateDartCode(className: string, assets: string[]): string {
   for (const assetPath of assets) {
     let varName = toVariableName(assetPath);
     if (seen.has(varName)) {
-      const count = seen.get(varName)! + 1;
-      seen.set(varName, count);
-      varName = varName + count;
+      const base = varName;
+      let count = seen.get(base)! + 1;
+      let candidate = base + count;
+      while (seen.has(candidate)) {
+        count++;
+        candidate = base + count;
+      }
+      seen.set(base, count);
+      seen.set(candidate, 1);
+      varName = candidate;
     } else {
       seen.set(varName, 1);
     }
-    lines.push(`static const String ${varName} = '${assetPath}';`);
+    lines.push(`  static const String ${varName} = '${assetPath}';`);
   }
 
   lines.push('}');
-  return lines.join('\n');
+  return lines.join('\n') + '\n';
 }

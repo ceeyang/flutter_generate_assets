@@ -28,6 +28,10 @@ describe('toVariableName', () => {
   it('handles single-level path', () => {
     expect(toVariableName('assets/images/logo.png')).toBe('imagesLogo');
   });
+
+  it('handles path without assets/ prefix gracefully', () => {
+    expect(toVariableName('images/logo.png')).toBe('imagesLogo');
+  });
 });
 
 describe('generateDartCode', () => {
@@ -45,7 +49,7 @@ describe('generateDartCode', () => {
 
   it('generates static const String entries', () => {
     const code = generateDartCode('Assets', ['assets/images/logo.png']);
-    expect(code).toContain("static const String imagesLogo = 'assets/images/logo.png';");
+    expect(code).toContain("  static const String imagesLogo = 'assets/images/logo.png';");
   });
 
   it('generates an empty class when asset list is empty', () => {
@@ -61,12 +65,21 @@ describe('generateDartCode', () => {
       'assets/my-icon/logo.png',
       'assets/my_icon/logo.png',
     ]);
-    expect(code).toContain('static const String myIconLogo =');
-    expect(code).toContain('static const String myIconLogo2 =');
+    expect(code).toContain('  static const String myIconLogo =');
+    expect(code).toContain('  static const String myIconLogo2 =');
   });
 
-  it('uses Assets as default class name', () => {
+  it('uses provided class name correctly', () => {
     const code = generateDartCode('Assets', ['assets/images/logo.png']);
     expect(code).toContain('class Assets {');
+  });
+
+  it('appends numeric suffix correctly for three colliding names', () => {
+    const code = generateDartCode('Assets', [
+      'assets/my-icon/logo.png',
+      'assets/my_icon/logo.png',
+    ]);
+    expect(code).toContain('  static const String myIconLogo =');
+    expect(code).toContain('  static const String myIconLogo2 =');
   });
 });
