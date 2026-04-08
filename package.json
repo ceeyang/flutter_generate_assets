@@ -21,6 +21,11 @@
           "type": "boolean",
           "default": true,
           "description": "Automatically regenerate assets file when files change"
+        },
+        "flutterGenerateAssets.hoverPreviewEnabled": {
+          "type": "boolean",
+          "default": false,
+          "description": "Show image thumbnail preview when hovering over asset constants (may affect performance)"
         }
       }
     }

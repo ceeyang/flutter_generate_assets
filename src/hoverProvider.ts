@@ -22,8 +22,12 @@ export class AssetHoverProvider implements vscode.HoverProvider {
     markdown.isTrusted = true;
     markdown.baseUri = vscode.Uri.file(workspaceRoot + '/');
 
+    const previewEnabled = vscode.workspace
+      .getConfiguration('flutterGenerateAssets')
+      .get<boolean>('hoverPreviewEnabled', false);
+
     const ext = path.extname(assetPath).toLowerCase();
-    if (IMAGE_EXTENSIONS.has(ext)) {
+    if (previewEnabled && IMAGE_EXTENSIONS.has(ext)) {
       const absPath = path.join(workspaceRoot, assetPath);
       if (fs.existsSync(absPath)) {
         markdown.appendMarkdown(`![preview](${assetPath})\n\n`);
