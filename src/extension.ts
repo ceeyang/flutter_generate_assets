@@ -9,6 +9,8 @@ import { AssetHoverProvider } from './hoverProvider';
 
 let statusBarItem: vscode.StatusBarItem;
 let outputChannel: vscode.OutputChannel;
+let idleTimer: ReturnType<typeof setTimeout> | undefined;
+let isGenerating = false;
 
 export function activate(context: vscode.ExtensionContext): void {
   outputChannel = vscode.window.createOutputChannel('Flutter Generate Assets');
@@ -43,47 +45,54 @@ export function activate(context: vscode.ExtensionContext): void {
 }
 
 export async function runGenerate(): Promise<void> {
-  const workspaceRoot = vscode.workspace.workspaceFolders?.[0]?.uri.fsPath;
-  if (!workspaceRoot) {
-    statusBarItem.text = '$(warning) Assets';
-    statusBarItem.tooltip = 'No workspace folder open';
-    return;
-  }
-
-  let config: PubspecConfig;
+  if (idleTimer) { clearTimeout(idleTimer); idleTimer = undefined; }
+  if (isGenerating) return;
+  isGenerating = true;
   try {
-    config = readPubspec(workspaceRoot);
-  } catch (err) {
-    statusBarItem.text = '$(warning) Assets';
-    statusBarItem.tooltip = 'Could not read pubspec.yaml';
-    outputChannel.appendLine(`[flutter-generate-assets] Error reading pubspec.yaml: ${err}`);
-    return;
-  }
-
-  statusBarItem.text = '$(sync~spin) Generating...';
-  statusBarItem.tooltip = undefined;
-
-  try {
-    const assets = scanAssets(workspaceRoot, config.assetPaths);
-    const code = generateDartCode(config.className, assets);
-
-    const outputPath = path.join(workspaceRoot, config.output);
-    const outputDir = path.dirname(outputPath);
-    if (!fs.existsSync(outputDir)) {
-      fs.mkdirSync(outputDir, { recursive: true });
+    const workspaceRoot = vscode.workspace.workspaceFolders?.[0]?.uri.fsPath;
+    if (!workspaceRoot) {
+      statusBarItem.text = '$(warning) Assets';
+      statusBarItem.tooltip = 'No workspace folder open';
+      return;
     }
-    fs.writeFileSync(outputPath, code, 'utf-8');
 
-    outputChannel.appendLine(
-      `[flutter-generate-assets] Generated ${config.output} (${assets.length} assets)`
-    );
-    statusBarItem.text = '$(check) Assets';
-    statusBarItem.tooltip = `Generated ${config.output}`;
-    setTimeout(setStatusIdle, 2000);
-  } catch (err) {
-    statusBarItem.text = '$(warning) Assets';
-    statusBarItem.tooltip = `Generation failed: ${err}`;
-    outputChannel.appendLine(`[flutter-generate-assets] Error: ${err}`);
+    let config: PubspecConfig;
+    try {
+      config = readPubspec(workspaceRoot);
+    } catch (err) {
+      statusBarItem.text = '$(warning) Assets';
+      statusBarItem.tooltip = 'Could not read pubspec.yaml';
+      outputChannel.appendLine(`[flutter-generate-assets] Error reading pubspec.yaml: ${err instanceof Error ? err.stack : String(err)}`);
+      return;
+    }
+
+    statusBarItem.text = '$(sync~spin) Generating...';
+    statusBarItem.tooltip = undefined;
+
+    try {
+      const assets = scanAssets(workspaceRoot, config.assetPaths);
+      const code = generateDartCode(config.className, assets);
+
+      const outputPath = path.join(workspaceRoot, config.output);
+      const outputDir = path.dirname(outputPath);
+      if (!fs.existsSync(outputDir)) {
+        fs.mkdirSync(outputDir, { recursive: true });
+      }
+      fs.writeFileSync(outputPath, code, 'utf-8');
+
+      outputChannel.appendLine(
+        `[flutter-generate-assets] Generated ${config.output} (${assets.length} assets)`
+      );
+      statusBarItem.text = '$(check) Assets';
+      statusBarItem.tooltip = `Generated ${config.output}`;
+      idleTimer = setTimeout(setStatusIdle, 2000);
+    } catch (err) {
+      statusBarItem.text = '$(warning) Assets';
+      statusBarItem.tooltip = `Generation failed: ${err}`;
+      outputChannel.appendLine(`[flutter-generate-assets] Error: ${err instanceof Error ? err.stack : String(err)}`);
+    }
+  } finally {
+    isGenerating = false;
   }
 }
 
@@ -92,4 +101,6 @@ function setStatusIdle(): void {
   statusBarItem.tooltip = 'Click to regenerate Flutter assets';
 }
 
-export function deactivate(): void {}
+export function deactivate(): void {
+  if (idleTimer) { clearTimeout(idleTimer); idleTimer = undefined; }
+}
