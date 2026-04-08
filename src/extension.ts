@@ -68,6 +68,8 @@ export async function runGenerate(): Promise<void> {
 
     statusBarItem.text = '$(sync~spin) Generating...';
     statusBarItem.tooltip = undefined;
+    // Yield to let VSCode repaint the status bar before synchronous work begins
+    await new Promise<void>(resolve => setTimeout(resolve, 0));
 
     try {
       const assets = scanAssets(workspaceRoot, config.assetPaths);
