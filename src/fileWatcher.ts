@@ -13,7 +13,7 @@ export function setupFileWatcher(onChanged: () => void): vscode.Disposable | und
   }
 
   const pubspecWatcher = vscode.workspace.createFileSystemWatcher('**/pubspec.yaml');
-  const assetsWatcher = vscode.workspace.createFileSystemWatcher('**/assets/**/*');
+  const assetsWatcher = vscode.workspace.createFileSystemWatcher('**/assets/**');
 
   const disposables: vscode.Disposable[] = [
     pubspecWatcher.onDidChange(debounced),
