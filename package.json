@@ -11,9 +11,26 @@
     "commands": [
       {
         "command": "flutter-generate-assets.generate",
-        "title": "Flutter: Generate Assets"
+        "title": "Flutter: Generate Assets",
+        "icon": "$(sync)"
       }
     ],
+    "menus": {
+      "explorer/context": [
+        {
+          "command": "flutter-generate-assets.generate",
+          "when": "resourceFilename == pubspec.yaml",
+          "group": "flutter@1"
+        }
+      ],
+      "editor/title": [
+        {
+          "command": "flutter-generate-assets.generate",
+          "when": "resourceFilename == pubspec.yaml",
+          "group": "navigation"
+        }
+      ]
+    },
     "configuration": {
       "title": "Flutter Generate Assets",
       "properties": {
