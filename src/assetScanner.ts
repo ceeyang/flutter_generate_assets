@@ -1,7 +1,7 @@
 import * as fs from 'fs';
 import * as path from 'path';
 
-const RESOLUTION_DIR_RE = /^[\d.]+x$/;
+const RESOLUTION_DIR_RE = /^\d+(?:\.\d+)?x$/;
 
 export function scanAssets(workspaceRoot: string, assetPaths: string[]): string[] {
   const results: string[] = [];
@@ -31,7 +31,7 @@ function collectFiles(dir: string, workspaceRoot: string, results: string[]): vo
     if (entry.isDirectory()) {
       if (RESOLUTION_DIR_RE.test(entry.name)) continue;
       collectFiles(fullPath, workspaceRoot, results);
-    } else {
+    } else if (entry.isFile()) {
       const rel = path.relative(workspaceRoot, fullPath).replace(/\\/g, '/');
       results.push(rel);
     }

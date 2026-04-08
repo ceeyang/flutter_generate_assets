@@ -82,4 +82,22 @@ describe('scanAssets', () => {
     expect(result).toContain('assets/images/logo.png');
     expect(result).toContain('assets/icons/arrow.svg');
   });
+
+  it('skips a directory when readdirSync throws', () => {
+    mockReaddirSync.mockImplementation((d: string) => {
+      if (d.endsWith('images')) return [file('logo.png'), dir('protected')];
+      if (d.endsWith('protected')) throw new Error('EACCES: permission denied');
+      return [];
+    });
+    const result = scanAssets('/workspace', ['assets/images/']);
+    expect(result).toContain('assets/images/logo.png');
+    // 'protected' subdir is skipped, no crash
+    expect(result.some(r => r.includes('protected'))).toBe(false);
+  });
+
+  it('includes a directly declared file (non-directory path)', () => {
+    mockStatSync.mockReturnValue({ isDirectory: () => false });
+    const result = scanAssets('/workspace', ['assets/images/logo.png']);
+    expect(result).toContain('assets/images/logo.png');
+  });
 });
