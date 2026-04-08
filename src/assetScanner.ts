@@ -3,6 +3,17 @@ import * as path from 'path';
 
 const RESOLUTION_DIR_RE = /^\d+(?:\.\d+)?x$/;
 
+// System/OS files that should never appear as Dart asset constants
+const IGNORED_FILES = new Set([
+  'Thumbs.db',      // Windows thumbnail cache
+  'desktop.ini',    // Windows folder settings
+  'ehthumbs.db',    // Windows media thumbnail cache
+]);
+
+function isIgnoredFile(name: string): boolean {
+  return name.startsWith('.') || IGNORED_FILES.has(name);
+}
+
 export function scanAssets(workspaceRoot: string, assetPaths: string[]): string[] {
   const results: string[] = [];
   for (const assetPath of assetPaths) {
@@ -12,7 +23,7 @@ export function scanAssets(workspaceRoot: string, assetPaths: string[]): string[
     const stat = fs.statSync(absPath);
     if (stat.isDirectory()) {
       collectFiles(absPath, workspaceRoot, results);
-    } else {
+    } else if (!isIgnoredFile(path.basename(trimmed))) {
       results.push(trimmed.replace(/\\/g, '/'));
     }
   }
@@ -31,7 +42,7 @@ function collectFiles(dir: string, workspaceRoot: string, results: string[]): vo
     if (entry.isDirectory()) {
       if (RESOLUTION_DIR_RE.test(entry.name)) continue;
       collectFiles(fullPath, workspaceRoot, results);
-    } else if (entry.isFile()) {
+    } else if (entry.isFile() && !isIgnoredFile(entry.name)) {
       const rel = path.relative(workspaceRoot, fullPath).replace(/\\/g, '/');
       results.push(rel);
     }

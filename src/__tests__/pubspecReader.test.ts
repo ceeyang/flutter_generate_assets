@@ -18,7 +18,7 @@ flutter:
     - assets/images/
 `);
     const config = readPubspec('/workspace');
-    expect(config.output).toBe('generated/assets.dart');
+    expect(config.output).toBe('lib/generated/assets.dart');
     expect(config.className).toBe('Assets');
     expect(config.assetPaths).toEqual(['assets/images/']);
   });

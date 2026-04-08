@@ -21,7 +21,7 @@ export function readPubspec(workspaceRoot: string): PubspecConfig {
   return {
     output: typeof generateAssets.output === 'string'
       ? generateAssets.output
-      : 'generated/assets.dart',
+      : 'lib/generated/assets.dart',
     className: typeof generateAssets.class_name === 'string'
       ? generateAssets.class_name
       : 'Assets',

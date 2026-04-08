@@ -95,6 +95,22 @@ describe('scanAssets', () => {
     expect(result.some(r => r.includes('protected'))).toBe(false);
   });
 
+  it('skips .DS_Store and other hidden files', () => {
+    mockReaddirSync.mockReturnValue([
+      file('logo.png'),
+      file('.DS_Store'),
+      file('Thumbs.db'),
+      file('desktop.ini'),
+      file('.gitkeep'),
+    ]);
+    const result = scanAssets('/workspace', ['assets/images/']);
+    expect(result).toContain('assets/images/logo.png');
+    expect(result).not.toContain('assets/images/.DS_Store');
+    expect(result).not.toContain('assets/images/Thumbs.db');
+    expect(result).not.toContain('assets/images/desktop.ini');
+    expect(result).not.toContain('assets/images/.gitkeep');
+  });
+
   it('includes a directly declared file (non-directory path)', () => {
     mockStatSync.mockReturnValue({ isDirectory: () => false });
     const result = scanAssets('/workspace', ['assets/images/logo.png']);
