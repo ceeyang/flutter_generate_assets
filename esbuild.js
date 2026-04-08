@@ -20,4 +20,4 @@ ctx.then(async (c) => {
     await c.rebuild();
     await c.dispose();
   }
-}).catch(() => process.exit(1));
+}).catch((err) => { console.error(err); process.exit(1); });
