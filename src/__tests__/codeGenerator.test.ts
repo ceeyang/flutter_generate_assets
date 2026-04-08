@@ -1,0 +1,72 @@
+import { toVariableName, generateDartCode } from '../codeGenerator';
+
+describe('toVariableName', () => {
+  it('converts simple underscore path to camelCase', () => {
+    expect(toVariableName('assets/images/my_icon.png')).toBe('imagesMyIcon');
+  });
+
+  it('converts hyphenated filename to camelCase', () => {
+    expect(toVariableName('assets/icons/arrow-left.svg')).toBe('iconsArrowLeft');
+  });
+
+  it('includes nested subdirectory segments', () => {
+    expect(toVariableName('assets/images/buttons/play.png')).toBe('imagesButtonsPlay');
+  });
+
+  it('lowercases all of first word', () => {
+    expect(toVariableName('assets/images/bg_home.jpg')).toBe('imagesBgHome');
+  });
+
+  it('prefixes with a when result starts with a digit', () => {
+    expect(toVariableName('assets/2icons/logo.png')).toBe('a2iconsLogo');
+  });
+
+  it('handles digit within a non-first segment', () => {
+    expect(toVariableName('assets/fonts/2x_bold.ttf')).toBe('fonts2xBold');
+  });
+
+  it('handles single-level path', () => {
+    expect(toVariableName('assets/images/logo.png')).toBe('imagesLogo');
+  });
+});
+
+describe('generateDartCode', () => {
+  it('includes the generated file header', () => {
+    const code = generateDartCode('Assets', ['assets/images/logo.png']);
+    expect(code).toContain('// GENERATED CODE - DO NOT MODIFY BY HAND');
+    expect(code).toContain('// ignore_for_file: lines_longer_than_80_chars, constant_identifier_names');
+    expect(code).toContain('// dart format off');
+  });
+
+  it('generates a class with the given name', () => {
+    const code = generateDartCode('R', ['assets/images/logo.png']);
+    expect(code).toContain('class R {');
+  });
+
+  it('generates static const String entries', () => {
+    const code = generateDartCode('Assets', ['assets/images/logo.png']);
+    expect(code).toContain("static const String imagesLogo = 'assets/images/logo.png';");
+  });
+
+  it('generates an empty class when asset list is empty', () => {
+    const code = generateDartCode('Assets', []);
+    expect(code).toContain('class Assets {');
+    expect(code).toContain('}');
+    expect(code).not.toContain('static const');
+  });
+
+  it('appends numeric suffix for duplicate variable names', () => {
+    // 'assets/my-icon/logo.png' and 'assets/my_icon/logo.png' both → myIconLogo
+    const code = generateDartCode('Assets', [
+      'assets/my-icon/logo.png',
+      'assets/my_icon/logo.png',
+    ]);
+    expect(code).toContain('static const String myIconLogo =');
+    expect(code).toContain('static const String myIconLogo2 =');
+  });
+
+  it('uses Assets as default class name', () => {
+    const code = generateDartCode('Assets', ['assets/images/logo.png']);
+    expect(code).toContain('class Assets {');
+  });
+});

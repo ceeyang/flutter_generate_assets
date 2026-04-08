@@ -1,0 +1,41 @@
+export function toVariableName(filePath: string): string {
+  // Strip leading 'assets/' prefix
+  const withoutPrefix = filePath.startsWith('assets/')
+    ? filePath.slice('assets/'.length)
+    : filePath;
+  // Strip file extension
+  const withoutExt = withoutPrefix.replace(/\.[^/.]+$/, '');
+  // Split on path separators and word separators
+  const words = withoutExt.split(/[/\-_]+/).filter(Boolean);
+  // camelCase: first word all lowercase, subsequent words capitalize first char
+  const camel = words
+    .map((w, i) => (i === 0 ? w.toLowerCase() : w.charAt(0).toUpperCase() + w.slice(1)))
+    .join('');
+  // Prefix 'a' if result starts with a digit
+  return /^\d/.test(camel) ? 'a' + camel : camel;
+}
+
+export function generateDartCode(className: string, assets: string[]): string {
+  const seen = new Map<string, number>();
+  const lines: string[] = [
+    '// GENERATED CODE - DO NOT MODIFY BY HAND',
+    '// ignore_for_file: lines_longer_than_80_chars, constant_identifier_names',
+    '// dart format off',
+    `class ${className} {`,
+  ];
+
+  for (const assetPath of assets) {
+    let varName = toVariableName(assetPath);
+    if (seen.has(varName)) {
+      const count = seen.get(varName)! + 1;
+      seen.set(varName, count);
+      varName = varName + count;
+    } else {
+      seen.set(varName, 1);
+    }
+    lines.push(`static const String ${varName} = '${assetPath}';`);
+  }
+
+  lines.push('}');
+  return lines.join('\n');
+}
