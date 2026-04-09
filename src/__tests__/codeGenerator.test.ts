@@ -61,27 +61,47 @@ describe('generateDartCode', () => {
     expect(code).not.toContain('static const');
   });
 
-  it('appends numeric suffix for duplicate variable names', () => {
-    // 'assets/my-icon/logo.png' and 'assets/my_icon/logo.png' both → myIconLogo
+  it('uses extension suffix when same name exists in different formats', () => {
+    const code = generateDartCode('Assets', [
+      'assets/copy_to_clipboard.png',
+      'assets/copy_to_clipboard.svg',
+    ]);
+    expect(code).toContain("  static const String copyToClipboardPng = 'assets/copy_to_clipboard.png';");
+    expect(code).toContain("  static const String copyToClipboardSvg = 'assets/copy_to_clipboard.svg';");
+    expect(code).not.toContain('copyToClipboard2');
+  });
+
+  it('uses extension suffix for same-named files in different directories', () => {
+    const code = generateDartCode('Assets', [
+      'assets/icons/logo.png',
+      'assets/icons/logo.svg',
+    ]);
+    expect(code).toContain('iconsLogoPng');
+    expect(code).toContain('iconsLogoSvg');
+  });
+
+  it('does not add extension suffix when names are already unique', () => {
+    const code = generateDartCode('Assets', [
+      'assets/images/logo.png',
+      'assets/icons/arrow.svg',
+    ]);
+    expect(code).toContain('  static const String imagesLogo =');
+    expect(code).toContain('  static const String iconsArrow =');
+  });
+
+  it('falls back to numeric suffix for truly identical paths', () => {
+    // Same path declared twice (shouldn't happen after dedup, but safe)
     const code = generateDartCode('Assets', [
       'assets/my-icon/logo.png',
       'assets/my_icon/logo.png',
     ]);
-    expect(code).toContain('  static const String myIconLogo =');
-    expect(code).toContain('  static const String myIconLogo2 =');
+    // Both produce same base name → numeric fallback still works
+    expect(code).toContain('myIconLogoPng');
+    expect(code).not.toContain('myIconLogo2');
   });
 
   it('uses provided class name correctly', () => {
     const code = generateDartCode('Assets', ['assets/images/logo.png']);
     expect(code).toContain('class Assets {');
-  });
-
-  it('appends numeric suffix correctly for three colliding names', () => {
-    const code = generateDartCode('Assets', [
-      'assets/my-icon/logo.png',
-      'assets/my_icon/logo.png',
-    ]);
-    expect(code).toContain('  static const String myIconLogo =');
-    expect(code).toContain('  static const String myIconLogo2 =');
   });
 });

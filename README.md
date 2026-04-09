@@ -7,7 +7,7 @@ A VSCode extension that generates Dart asset constants from your Flutter project
 - **Manual trigger** — run from the command palette, status bar, or context menu
 - **File watching** — optionally regenerates when assets change (disabled by default)
 - **Image hover preview** — hover over any asset constant to see a thumbnail (optional)
-- **Smart naming** — converts file paths to camelCase including directory segments
+- **Smart naming** — converts file paths to camelCase including directory segments; automatically appends file extension to disambiguate same-named files in different formats (e.g. `copyToClipboardPng` / `copyToClipboardSvg`)
 - **Format-safe** — generated file includes `// dart format off` to prevent formatter interference
 - **Resolution-aware** — ignores `2x`, `3x`, `1.5x` resolution variant directories automatically
 
@@ -57,6 +57,14 @@ class Assets {
   static const String imagesBgHome = 'assets/images/bg_home.jpg';
   static const String iconsArrowLeft = 'assets/icons/arrow-left.svg';
 }
+```
+
+When two files share the same name but have different extensions, the extension is automatically appended to distinguish them:
+
+```dart
+// assets/copy_to_clipboard.png + assets/copy_to_clipboard.svg →
+static const String copyToClipboardPng = 'assets/copy_to_clipboard.png';
+static const String copyToClipboardSvg = 'assets/copy_to_clipboard.svg';
 ```
 
 ## Requirements

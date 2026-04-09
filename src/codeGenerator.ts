@@ -1,12 +1,16 @@
-export function toVariableName(filePath: string): string {
+export function toVariableName(filePath: string, includeExt = false): string {
   // Strip leading 'assets/' prefix
   const withoutPrefix = filePath.startsWith('assets/')
     ? filePath.slice('assets/'.length)
     : filePath;
-  // Strip file extension
+  // Extract extension (without the dot)
+  const extMatch = withoutPrefix.match(/\.([^/.]+)$/);
+  const ext = extMatch ? extMatch[1] : '';
   const withoutExt = withoutPrefix.replace(/\.[^/.]+$/, '');
+  // Optionally append extension as a name segment
+  const source = includeExt && ext ? `${withoutExt}_${ext}` : withoutExt;
   // Split on path separators and word separators
-  const words = withoutExt.split(/[/\-_]+/).filter(Boolean);
+  const words = source.split(/[/\-_.]+/).filter(Boolean);
   // camelCase: first word all lowercase, subsequent words capitalize first char
   const camel = words
     .map((w, i) => (i === 0 ? w.toLowerCase() : w.charAt(0).toUpperCase() + w.slice(1)))
@@ -16,6 +20,13 @@ export function toVariableName(filePath: string): string {
 }
 
 export function generateDartCode(className = 'Assets', assets: string[]): string {
+  // First pass: detect which base names (without ext) have collisions
+  const baseCounts = new Map<string, number>();
+  for (const assetPath of assets) {
+    const base = toVariableName(assetPath, false);
+    baseCounts.set(base, (baseCounts.get(base) ?? 0) + 1);
+  }
+
   const seen = new Map<string, number>();
   const lines: string[] = [
     '// GENERATED CODE - DO NOT MODIFY BY HAND',
@@ -27,16 +38,16 @@ export function generateDartCode(className = 'Assets', assets: string[]): string
   ];
 
   for (const assetPath of assets) {
-    let varName = toVariableName(assetPath);
+    const base = toVariableName(assetPath, false);
+    // Use extension in name only when there's a collision on the base name
+    const useExt = (baseCounts.get(base) ?? 1) > 1;
+    let varName = toVariableName(assetPath, useExt);
+    // Fallback numeric suffix for any remaining collisions (e.g. identical paths)
     if (seen.has(varName)) {
-      const base = varName;
-      let count = seen.get(base)! + 1;
-      let candidate = base + count;
-      while (seen.has(candidate)) {
-        count++;
-        candidate = base + count;
-      }
-      seen.set(base, count);
+      let count = seen.get(varName)! + 1;
+      let candidate = varName + count;
+      while (seen.has(candidate)) { count++; candidate = varName + count; }
+      seen.set(varName, count);
       seen.set(candidate, 1);
       varName = candidate;
     } else {
