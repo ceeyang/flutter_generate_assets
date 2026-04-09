@@ -2,7 +2,7 @@
   "name": "flutter-generate-assets",
   "displayName": "Flutter Generate Assets",
   "description": "Auto-generate Dart asset constants from Flutter project assets",
-  "version": "0.0.3",
+  "version": "0.0.4",
   "publisher": "ceeyang",
   "license": "MIT",
   "repository": {
@@ -55,7 +55,7 @@
       "properties": {
         "flutterGenerateAssets.watchEnabled": {
           "type": "boolean",
-          "default": true,
+          "default": false,
           "description": "Automatically regenerate assets file when files change"
         },
         "flutterGenerateAssets.hoverPreviewEnabled": {

@@ -14,7 +14,7 @@ export function readPubspec(workspaceRoot: string): PubspecConfig {
   const doc = yaml.load(content) as Record<string, unknown>;
 
   const flutter = (doc?.flutter as Record<string, unknown>) ?? {};
-  const generateAssets = (flutter?.generate_assets as Record<string, unknown>) ?? {};
+  const generateAssets = (doc?.flutter_generate_assets as Record<string, unknown>) ?? {};
 
   const rawAssets = flutter?.assets;
 

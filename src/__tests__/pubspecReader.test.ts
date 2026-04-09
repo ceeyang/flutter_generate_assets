@@ -23,28 +23,44 @@ flutter:
     expect(config.assetPaths).toEqual(['assets/images/']);
   });
 
-  it('reads custom output and class_name from generate_assets', () => {
+  it('reads custom output and class_name from root flutter_generate_assets', () => {
     mockReadFileSync.mockReturnValue(`
+flutter_generate_assets:
+  output: lib/common/assets.dart
+  class_name: Assets
 flutter:
-  generate_assets:
-    output: lib/gen/assets.dart
-    class_name: R
   assets:
     - assets/images/
     - assets/icons/
 `);
     const config = readPubspec('/workspace');
-    expect(config.output).toBe('lib/gen/assets.dart');
-    expect(config.className).toBe('R');
+    expect(config.output).toBe('lib/common/assets.dart');
+    expect(config.className).toBe('Assets');
     expect(config.assetPaths).toEqual(['assets/images/', 'assets/icons/']);
+  });
+
+  it('ignores flutter.generate_assets and uses flutter_generate_assets instead', () => {
+    mockReadFileSync.mockReturnValue(`
+flutter:
+  generate_assets:
+    output: lib/wrong/assets.dart
+    class_name: Wrong
+  assets:
+    - assets/images/
+flutter_generate_assets:
+  output: lib/correct/assets.dart
+  class_name: Correct
+`);
+    const config = readPubspec('/workspace');
+    expect(config.output).toBe('lib/correct/assets.dart');
+    expect(config.className).toBe('Correct');
   });
 
   it('returns empty assetPaths when flutter.assets is not declared', () => {
     mockReadFileSync.mockReturnValue(`
 name: my_app
-flutter:
-  generate_assets:
-    output: lib/assets.dart
+flutter_generate_assets:
+  output: lib/assets.dart
 `);
     const config = readPubspec('/workspace');
     expect(config.assetPaths).toEqual([]);
