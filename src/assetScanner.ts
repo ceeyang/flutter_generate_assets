@@ -17,7 +17,8 @@ function isIgnoredFile(name: string): boolean {
 export function scanAssets(workspaceRoot: string, assetPaths: string[]): string[] {
   const results: string[] = [];
   for (const assetPath of assetPaths) {
-    const trimmed = assetPath.replace(/\/$/, '');
+    const trimmed = assetPath.trim().replace(/\/$/, '');
+    if (!trimmed) continue;
     const absPath = path.join(workspaceRoot, trimmed);
     if (!fs.existsSync(absPath)) continue;
     const stat = fs.statSync(absPath);

@@ -20,9 +20,12 @@ export function toVariableName(filePath: string, includeExt = false): string {
 }
 
 export function generateDartCode(className = 'Assets', assets: string[]): string {
+  // Deduplicate paths — guard against scanner returning the same path twice
+  const uniqueAssets = [...new Set(assets)];
+
   // First pass: detect which base names (without ext) have collisions
   const baseCounts = new Map<string, number>();
-  for (const assetPath of assets) {
+  for (const assetPath of uniqueAssets) {
     const base = toVariableName(assetPath, false);
     baseCounts.set(base, (baseCounts.get(base) ?? 0) + 1);
   }
@@ -37,7 +40,7 @@ export function generateDartCode(className = 'Assets', assets: string[]): string
     `class ${className} {`,
   ];
 
-  for (const assetPath of assets) {
+  for (const assetPath of uniqueAssets) {
     const base = toVariableName(assetPath, false);
     // Use extension in name only when there's a collision on the base name
     const useExt = (baseCounts.get(base) ?? 1) > 1;
