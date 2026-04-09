@@ -116,4 +116,18 @@ describe('scanAssets', () => {
     const result = scanAssets('/workspace', ['assets/images/logo.png']);
     expect(result).toContain('assets/images/logo.png');
   });
+
+  it('deduplicates when a file is declared both via directory and explicitly', () => {
+    mockStatSync.mockImplementation((p: string) => ({
+      isDirectory: () => !p.endsWith('.svg'),
+    }));
+    mockReaddirSync.mockReturnValue([file('ic_red_packet_detail.svg')]);
+    // assets/icons/ (directory) + assets/icons/ic_red_packet_detail.svg (explicit)
+    const result = scanAssets('/workspace', [
+      'assets/icons/',
+      'assets/icons/ic_red_packet_detail.svg',
+    ]);
+    const count = result.filter(r => r === 'assets/icons/ic_red_packet_detail.svg').length;
+    expect(count).toBe(1);
+  });
 });

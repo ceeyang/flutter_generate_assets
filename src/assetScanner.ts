@@ -27,7 +27,7 @@ export function scanAssets(workspaceRoot: string, assetPaths: string[]): string[
       results.push(trimmed.replace(/\\/g, '/'));
     }
   }
-  return results.sort();
+  return [...new Set(results)].sort();
 }
 
 function collectFiles(dir: string, workspaceRoot: string, results: string[]): void {
