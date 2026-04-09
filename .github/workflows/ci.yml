@@ -58,6 +58,9 @@ jobs:
       - name: Publish to VS Code Marketplace
         run: npm run deploy -- -p ${{ secrets.VSCE_PAT }}
 
+      - name: Publish to Open VSX Registry
+        run: npx ovsx publish *.vsix -p ${{ secrets.OVSX_PAT }}
+
       - name: Upload VSIX to GitHub Release
         uses: softprops/action-gh-release@v2
         with:
