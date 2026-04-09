@@ -11,6 +11,7 @@ let statusBarItem: vscode.StatusBarItem;
 let outputChannel: vscode.OutputChannel;
 let idleTimer: ReturnType<typeof setTimeout> | undefined;
 let isGenerating = false;
+let watcherDisposable: vscode.Disposable | undefined;
 
 export function activate(context: vscode.ExtensionContext): void {
   outputChannel = vscode.window.createOutputChannel('Flutter Generate Assets');
@@ -24,24 +25,66 @@ export function activate(context: vscode.ExtensionContext): void {
     () => runGenerate()
   );
 
+  const toggleWatchCommand = vscode.commands.registerCommand(
+    'flutter-generate-assets.toggleWatch',
+    () => toggleWatch()
+  );
+
+  const toggleHoverPreviewCommand = vscode.commands.registerCommand(
+    'flutter-generate-assets.toggleHoverPreview',
+    () => toggleHoverPreview()
+  );
+
   const hoverProvider = new AssetHoverProvider();
   const hoverDisposable = vscode.languages.registerHoverProvider(
     { language: 'dart' },
     hoverProvider
   );
 
-  const watcherDisposable = setupFileWatcher(() => runGenerate());
+  watcherDisposable = setupFileWatcher(() => runGenerate());
 
   context.subscriptions.push(
     statusBarItem,
     outputChannel,
     generateCommand,
+    toggleWatchCommand,
+    toggleHoverPreviewCommand,
     hoverDisposable,
-    ...(watcherDisposable ? [watcherDisposable] : [])
   );
 
   // Auto-generate on activation
   runGenerate();
+}
+
+async function toggleWatch(): Promise<void> {
+  const config = vscode.workspace.getConfiguration('flutterGenerateAssets');
+  const current = config.get<boolean>('watchEnabled', false);
+  const next = !current;
+  await config.update('watchEnabled', next, vscode.ConfigurationTarget.Workspace);
+
+  // Restart watcher based on new state
+  if (watcherDisposable) {
+    watcherDisposable.dispose();
+    watcherDisposable = undefined;
+  }
+  if (next) {
+    watcherDisposable = setupFileWatcher(() => runGenerate());
+  }
+
+  vscode.window.showInformationMessage(
+    next ? 'Flutter Generate Assets: Watch enabled' : 'Flutter Generate Assets: Watch disabled'
+  );
+}
+
+async function toggleHoverPreview(): Promise<void> {
+  const config = vscode.workspace.getConfiguration('flutterGenerateAssets');
+  const current = config.get<boolean>('hoverPreviewEnabled', false);
+  const next = !current;
+  await config.update('hoverPreviewEnabled', next, vscode.ConfigurationTarget.Workspace);
+
+  vscode.window.showInformationMessage(
+    next ? 'Flutter Generate Assets: Hover preview enabled' : 'Flutter Generate Assets: Hover preview disabled'
+  );
 }
 
 export async function runGenerate(): Promise<void> {
@@ -105,4 +148,5 @@ function setStatusIdle(): void {
 
 export function deactivate(): void {
   if (idleTimer) { clearTimeout(idleTimer); idleTimer = undefined; }
+  if (watcherDisposable) { watcherDisposable.dispose(); watcherDisposable = undefined; }
 }

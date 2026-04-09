@@ -2,7 +2,7 @@
   "name": "flutter-generate-assets",
   "displayName": "Flutter Generate Assets",
   "description": "Auto-generate Dart asset constants from Flutter project assets",
-  "version": "0.0.7",
+  "version": "0.0.8",
   "publisher": "ceeyang",
   "license": "MIT",
   "repository": {
@@ -32,6 +32,16 @@
         "command": "flutter-generate-assets.generate",
         "title": "Flutter: Generate Assets",
         "icon": "$(sync)"
+      },
+      {
+        "command": "flutter-generate-assets.toggleWatch",
+        "title": "Flutter: Toggle Asset Watch",
+        "icon": "$(radio-tower)"
+      },
+      {
+        "command": "flutter-generate-assets.toggleHoverPreview",
+        "title": "Flutter: Toggle Asset Hover Preview",
+        "icon": "$(eye)"
       }
     ],
     "menus": {
@@ -40,11 +50,31 @@
           "command": "flutter-generate-assets.generate",
           "when": "resourceFilename == pubspec.yaml",
           "group": "flutter@1"
+        },
+        {
+          "command": "flutter-generate-assets.toggleWatch",
+          "when": "resourceFilename == pubspec.yaml",
+          "group": "flutter@2"
+        },
+        {
+          "command": "flutter-generate-assets.toggleHoverPreview",
+          "when": "resourceFilename == pubspec.yaml",
+          "group": "flutter@3"
         }
       ],
       "editor/title": [
         {
           "command": "flutter-generate-assets.generate",
+          "when": "resourceFilename == pubspec.yaml",
+          "group": "navigation"
+        },
+        {
+          "command": "flutter-generate-assets.toggleWatch",
+          "when": "resourceFilename == pubspec.yaml",
+          "group": "navigation"
+        },
+        {
+          "command": "flutter-generate-assets.toggleHoverPreview",
           "when": "resourceFilename == pubspec.yaml",
           "group": "navigation"
         }
