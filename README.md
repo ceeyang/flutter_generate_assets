@@ -1,5 +1,7 @@
 # Flutter Generate Assets
 
+[English](README.md) | [中文](README.zh.md)
+
 A VSCode extension that generates Dart asset constants from your Flutter project's `pubspec.yaml`.
 
 ## Features
