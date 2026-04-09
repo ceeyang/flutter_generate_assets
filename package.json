@@ -2,7 +2,7 @@
   "name": "flutter-generate-assets",
   "displayName": "Flutter Generate Assets",
   "description": "Auto-generate Dart asset constants from Flutter project assets",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "publisher": "ceeyang",
   "license": "MIT",
   "repository": {
