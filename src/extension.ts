@@ -52,8 +52,6 @@ export function activate(context: vscode.ExtensionContext): void {
     hoverDisposable,
   );
 
-  // Auto-generate on activation
-  runGenerate();
 }
 
 async function toggleWatch(): Promise<void> {
