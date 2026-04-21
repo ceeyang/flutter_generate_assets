@@ -10,7 +10,7 @@ export function toVariableName(filePath: string, includeExt = false): string {
   // Optionally append extension as a name segment
   const source = includeExt && ext ? `${withoutExt}_${ext}` : withoutExt;
   // Split on path separators and word separators
-  const words = source.split(/[/\-_.]+/).filter(Boolean);
+  const words = source.split(/[/\-_.\s]+/).filter(Boolean);
   // camelCase: first word all lowercase, subsequent words capitalize first char
   const camel = words
     .map((w, i) => (i === 0 ? w.toLowerCase() : w.charAt(0).toUpperCase() + w.slice(1)))

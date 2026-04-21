@@ -32,6 +32,10 @@ describe('toVariableName', () => {
   it('handles path without assets/ prefix gracefully', () => {
     expect(toVariableName('images/logo.png')).toBe('imagesLogo');
   });
+
+  it('converts spaces in filename to camelCase', () => {
+    expect(toVariableName('assets/artboard copy.json')).toBe('artboardCopy');
+  });
 });
 
 describe('generateDartCode', () => {
