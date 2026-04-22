@@ -2,7 +2,7 @@
   "name": "flutter-generate-assets",
   "displayName": "Flutter Generate Assets",
   "description": "Auto-generate Dart asset constants from Flutter project assets",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "publisher": "ceeyang",
   "license": "MIT",
   "repository": {
@@ -42,6 +42,16 @@
         "command": "flutter-generate-assets.toggleHoverPreview",
         "title": "Flutter: Toggle Asset Hover Preview",
         "icon": "$(eye)"
+      },
+      {
+        "command": "flutter-generate-assets.findUnused",
+        "title": "Flutter: Find Unused Assets",
+        "icon": "$(search)"
+      },
+      {
+        "command": "flutter-generate-assets.buildRunner",
+        "title": "Flutter: Run Build Runner",
+        "icon": "$(play)"
       }
     ],
     "menus": {
@@ -60,6 +70,16 @@
           "command": "flutter-generate-assets.toggleHoverPreview",
           "when": "resourceFilename == pubspec.yaml",
           "group": "flutter@3"
+        },
+        {
+          "command": "flutter-generate-assets.findUnused",
+          "when": "resourceFilename == pubspec.yaml",
+          "group": "flutter@4"
+        },
+        {
+          "command": "flutter-generate-assets.buildRunner",
+          "when": "resourceFilename == pubspec.yaml",
+          "group": "flutter@5"
         }
       ],
       "editor/title": [
@@ -75,6 +95,16 @@
         },
         {
           "command": "flutter-generate-assets.toggleHoverPreview",
+          "when": "resourceFilename == pubspec.yaml",
+          "group": "navigation"
+        },
+        {
+          "command": "flutter-generate-assets.findUnused",
+          "when": "resourceFilename == pubspec.yaml",
+          "group": "navigation"
+        },
+        {
+          "command": "flutter-generate-assets.buildRunner",
           "when": "resourceFilename == pubspec.yaml",
           "group": "navigation"
         }

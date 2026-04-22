@@ -6,12 +6,14 @@ import { scanAssets } from './assetScanner';
 import { generateDartCode } from './codeGenerator';
 import { setupFileWatcher } from './fileWatcher';
 import { AssetHoverProvider } from './hoverProvider';
+import { findUnusedAssets } from './unusedScanner';
 
 let statusBarItem: vscode.StatusBarItem;
 let outputChannel: vscode.OutputChannel;
 let idleTimer: ReturnType<typeof setTimeout> | undefined;
 let isGenerating = false;
 let watcherDisposable: vscode.Disposable | undefined;
+let unusedDiagnostics: vscode.DiagnosticCollection;
 
 export function activate(context: vscode.ExtensionContext): void {
   outputChannel = vscode.window.createOutputChannel('Flutter Generate Assets');
@@ -19,6 +21,8 @@ export function activate(context: vscode.ExtensionContext): void {
   statusBarItem.command = 'flutter-generate-assets.generate';
   setStatusIdle();
   statusBarItem.show();
+
+  unusedDiagnostics = vscode.languages.createDiagnosticCollection('flutter-generate-assets-unused');
 
   const generateCommand = vscode.commands.registerCommand(
     'flutter-generate-assets.generate',
@@ -35,6 +39,16 @@ export function activate(context: vscode.ExtensionContext): void {
     () => toggleHoverPreview()
   );
 
+  const findUnusedCommand = vscode.commands.registerCommand(
+    'flutter-generate-assets.findUnused',
+    () => runFindUnused()
+  );
+
+  const buildRunnerCommand = vscode.commands.registerCommand(
+    'flutter-generate-assets.buildRunner',
+    () => runBuildRunner()
+  );
+
   const hoverProvider = new AssetHoverProvider();
   const hoverDisposable = vscode.languages.registerHoverProvider(
     { language: 'dart' },
@@ -46,28 +60,23 @@ export function activate(context: vscode.ExtensionContext): void {
   context.subscriptions.push(
     statusBarItem,
     outputChannel,
+    unusedDiagnostics,
     generateCommand,
     toggleWatchCommand,
     toggleHoverPreviewCommand,
+    findUnusedCommand,
+    buildRunnerCommand,
     hoverDisposable,
   );
-
 }
 
 async function toggleWatch(): Promise<void> {
   const config = vscode.workspace.getConfiguration('flutterGenerateAssets');
-  const current = config.get<boolean>('watchEnabled', false);
-  const next = !current;
+  const next = !config.get<boolean>('watchEnabled', false);
   await config.update('watchEnabled', next, vscode.ConfigurationTarget.Workspace);
 
-  // Restart watcher based on new state
-  if (watcherDisposable) {
-    watcherDisposable.dispose();
-    watcherDisposable = undefined;
-  }
-  if (next) {
-    watcherDisposable = setupFileWatcher(() => runGenerate());
-  }
+  if (watcherDisposable) { watcherDisposable.dispose(); watcherDisposable = undefined; }
+  if (next) { watcherDisposable = setupFileWatcher(() => runGenerate()); }
 
   vscode.window.showInformationMessage(
     next ? 'Flutter Generate Assets: Watch enabled' : 'Flutter Generate Assets: Watch disabled'
@@ -76,13 +85,80 @@ async function toggleWatch(): Promise<void> {
 
 async function toggleHoverPreview(): Promise<void> {
   const config = vscode.workspace.getConfiguration('flutterGenerateAssets');
-  const current = config.get<boolean>('hoverPreviewEnabled', false);
-  const next = !current;
+  const next = !config.get<boolean>('hoverPreviewEnabled', false);
   await config.update('hoverPreviewEnabled', next, vscode.ConfigurationTarget.Workspace);
 
   vscode.window.showInformationMessage(
     next ? 'Flutter Generate Assets: Hover preview enabled' : 'Flutter Generate Assets: Hover preview disabled'
   );
+}
+
+async function runFindUnused(): Promise<void> {
+  const workspaceRoot = vscode.workspace.workspaceFolders?.[0]?.uri.fsPath;
+  if (!workspaceRoot) return;
+
+  let config: PubspecConfig;
+  try {
+    config = readPubspec(workspaceRoot);
+  } catch {
+    vscode.window.showWarningMessage('Flutter Generate Assets: Could not read pubspec.yaml');
+    return;
+  }
+
+  const generatedFilePath = path.join(workspaceRoot, config.output);
+  if (!fs.existsSync(generatedFilePath)) {
+    vscode.window.showWarningMessage(
+      `Flutter Generate Assets: Generated file not found — run "Flutter: Generate Assets" first`
+    );
+    return;
+  }
+
+  const unused = findUnusedAssets(workspaceRoot, config.className, generatedFilePath);
+  unusedDiagnostics.clear();
+
+  if (unused.length === 0) {
+    vscode.window.showInformationMessage('Flutter Generate Assets: No unused assets found');
+    return;
+  }
+
+  // Mark unused constants as warnings in the generated file
+  const generatedUri = vscode.Uri.file(generatedFilePath);
+  const fileContent = fs.readFileSync(generatedFilePath, 'utf-8');
+  const lines = fileContent.split('\n');
+
+  const diagnostics: vscode.Diagnostic[] = unused.map(({ line, assetPath, varName }) => {
+    const lineText = lines[line] ?? '';
+    const start = lineText.indexOf(varName);
+    const range = new vscode.Range(
+      line, start >= 0 ? start : 0,
+      line, lineText.length
+    );
+    const diag = new vscode.Diagnostic(
+      range,
+      `Unused asset: '${assetPath}'`,
+      vscode.DiagnosticSeverity.Warning
+    );
+    diag.source = 'Flutter Generate Assets';
+    return diag;
+  });
+
+  unusedDiagnostics.set(generatedUri, diagnostics);
+
+  outputChannel.clear();
+  outputChannel.appendLine(`[flutter-generate-assets] Found ${unused.length} unused asset(s):`);
+  unused.forEach(({ assetPath }) => outputChannel.appendLine(`  - ${assetPath}`));
+  outputChannel.show(true);
+
+  vscode.window.showWarningMessage(
+    `Flutter Generate Assets: ${unused.length} unused asset(s) found — see Problems panel`
+  );
+}
+
+function runBuildRunner(): void {
+  const workspaceRoot = vscode.workspace.workspaceFolders?.[0]?.uri.fsPath;
+  const terminal = vscode.window.createTerminal({ name: 'Flutter Build Runner', cwd: workspaceRoot });
+  terminal.show();
+  terminal.sendText('flutter pub run build_runner build --delete-conflicting-outputs');
 }
 
 export async function runGenerate(): Promise<void> {
@@ -109,7 +185,6 @@ export async function runGenerate(): Promise<void> {
 
     statusBarItem.text = '$(sync~spin) Generating...';
     statusBarItem.tooltip = undefined;
-    // Yield to let VSCode repaint the status bar before synchronous work begins
     await new Promise<void>(resolve => setTimeout(resolve, 0));
 
     try {
@@ -122,6 +197,9 @@ export async function runGenerate(): Promise<void> {
         fs.mkdirSync(outputDir, { recursive: true });
       }
       fs.writeFileSync(outputPath, code, 'utf-8');
+
+      // Clear stale unused diagnostics when file is regenerated
+      unusedDiagnostics.clear();
 
       outputChannel.appendLine(
         `[flutter-generate-assets] Generated ${config.output} (${assets.length} assets)`
