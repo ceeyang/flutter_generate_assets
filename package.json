@@ -49,6 +49,11 @@
         "icon": "$(search)"
       },
       {
+        "command": "flutter-generate-assets.deleteUnused",
+        "title": "Flutter: Delete Unused Assets",
+        "icon": "$(trash)"
+      },
+      {
         "command": "flutter-generate-assets.buildRunner",
         "title": "Flutter: Run Build Runner",
         "icon": "$(play)"
@@ -77,9 +82,14 @@
           "group": "flutter@4"
         },
         {
-          "command": "flutter-generate-assets.buildRunner",
+          "command": "flutter-generate-assets.deleteUnused",
           "when": "resourceFilename == pubspec.yaml",
           "group": "flutter@5"
+        },
+        {
+          "command": "flutter-generate-assets.buildRunner",
+          "when": "resourceFilename == pubspec.yaml",
+          "group": "flutter@6"
         }
       ],
       "editor/title": [
@@ -100,6 +110,11 @@
         },
         {
           "command": "flutter-generate-assets.findUnused",
+          "when": "resourceFilename == pubspec.yaml",
+          "group": "navigation"
+        },
+        {
+          "command": "flutter-generate-assets.deleteUnused",
           "when": "resourceFilename == pubspec.yaml",
           "group": "navigation"
         },

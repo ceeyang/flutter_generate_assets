@@ -12,15 +12,41 @@ A VSCode extension that generates Dart asset constants from your Flutter project
 - **Smart naming** — converts file paths to camelCase including directory segments; automatically appends file extension to disambiguate same-named files in different formats (e.g. `copyToClipboardPng` / `copyToClipboardSvg`)
 - **Format-safe** — generated file includes `// dart format off` to prevent formatter interference
 - **Resolution-aware** — ignores `2x`, `3x`, `1.5x` resolution variant directories automatically
+- **Unused asset detection** — scans `lib/` Dart files and highlights unused constants with warnings
+- **Batch delete** — one-click removal of unused assets including all resolution variants
+
+## Commands
+
+All commands are available via `Cmd+Shift+P`, the `pubspec.yaml` right-click context menu, and the editor title bar.
+
+| Command | Description |
+|---|---|
+| **Flutter: Generate Assets** | Generate the Dart constants file from declared assets |
+| **Flutter: Toggle Asset Watch** | Enable/disable auto-regeneration on file changes |
+| **Flutter: Toggle Asset Hover Preview** | Enable/disable image thumbnail on hover |
+| **Flutter: Find Unused Assets** | Scan `lib/` and mark unused asset constants with warnings |
+| **Flutter: Delete Unused Assets** | Batch-delete files found by the previous scan (including `2x`/`3x` variants) |
+| **Flutter: Run Build Runner** | Run `flutter pub run build_runner build --delete-conflicting-outputs` in the terminal |
 
 ## Usage
 
-Trigger generation via any of the following:
+### Generate constants
 
 - `Cmd+Shift+P` → **Flutter: Generate Assets**
 - Right-click `pubspec.yaml` in the Explorer → **Flutter: Generate Assets**
 - Open `pubspec.yaml` and click the `⟳` icon in the editor title bar
 - Click the `⟳ Assets` button in the status bar
+
+### Find and delete unused assets
+
+1. `Cmd+Shift+P` → **Flutter: Find Unused Assets**
+   - Unused constants are marked with yellow warning squiggles in the generated file
+   - The Output Channel lists all unused paths
+2. `Cmd+Shift+P` → **Flutter: Delete Unused Assets**
+   - A confirmation dialog shows every file that will be deleted (including `2x`, `3x` variants)
+   - After deletion, the constants file is regenerated automatically
+
+> **Note:** Assets referenced via string interpolation (e.g. `'assets/$name.png'`) cannot be statically detected and may be reported as unused.
 
 ## Configuration
 

@@ -12,15 +12,41 @@
 - **智能命名** — 将文件路径转换为 camelCase，包含目录层级；当同名文件存在不同格式时，自动在末尾追加扩展名加以区分（例如 `copyToClipboardPng` / `copyToClipboardSvg`）
 - **格式安全** — 生成文件顶部添加 `// dart format off`，防止 Dart 格式化工具修改生成内容
 - **分辨率感知** — 自动忽略 `2x`、`3x`、`1.5x` 等分辨率变体目录
+- **未使用资源检测** — 扫描 `lib/` 下的 Dart 文件，在生成文件中高亮标记未使用的常量
+- **批量删除** — 一键删除未使用的资源文件，同时删除所有分辨率变体（2x、3x 等）
+
+## 命令列表
+
+所有命令均可通过 `Cmd+Shift+P`、`pubspec.yaml` 右键菜单或编辑器标题栏访问。
+
+| 命令 | 说明 |
+|---|---|
+| **Flutter: Generate Assets** | 根据声明的资源生成 Dart 常量文件 |
+| **Flutter: Toggle Asset Watch** | 开启/关闭文件变更时自动重新生成 |
+| **Flutter: Toggle Asset Hover Preview** | 开启/关闭悬停图片缩略图预览 |
+| **Flutter: Find Unused Assets** | 扫描 `lib/` 并对未使用的资源常量添加警告标记 |
+| **Flutter: Delete Unused Assets** | 批量删除上次扫描找到的未使用资源（含 `2x`/`3x` 变体） |
+| **Flutter: Run Build Runner** | 在终端运行 `flutter pub run build_runner build --delete-conflicting-outputs` |
 
 ## 使用方式
 
-通过以下任意方式触发生成：
+### 生成常量文件
 
 - `Cmd+Shift+P` → **Flutter: Generate Assets**
 - 在资源管理器中右键点击 `pubspec.yaml` → **Flutter: Generate Assets**
 - 打开 `pubspec.yaml`，点击编辑器标题栏中的 `⟳` 图标
 - 点击状态栏中的 `⟳ Assets` 按钮
+
+### 查找并删除未使用的资源
+
+1. `Cmd+Shift+P` → **Flutter: Find Unused Assets**
+   - 未使用的常量在生成文件中显示黄色警告波浪线
+   - Output Channel 中列出所有未使用的资源路径
+2. `Cmd+Shift+P` → **Flutter: Delete Unused Assets**
+   - 弹出确认对话框，列出所有将被删除的文件（包括 `2x`、`3x` 变体）
+   - 删除完成后自动重新生成常量文件
+
+> **注意：** 通过字符串插值引用的资源（如 `'assets/$name.png'`）无法被静态检测，可能会被误报为未使用。
 
 ## 配置
 

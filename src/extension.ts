@@ -6,7 +6,7 @@ import { scanAssets } from './assetScanner';
 import { generateDartCode } from './codeGenerator';
 import { setupFileWatcher } from './fileWatcher';
 import { AssetHoverProvider } from './hoverProvider';
-import { findUnusedAssets } from './unusedScanner';
+import { findUnusedAssets, findResolutionVariants, UnusedAssetEntry } from './unusedScanner';
 
 let statusBarItem: vscode.StatusBarItem;
 let outputChannel: vscode.OutputChannel;
@@ -14,6 +14,7 @@ let idleTimer: ReturnType<typeof setTimeout> | undefined;
 let isGenerating = false;
 let watcherDisposable: vscode.Disposable | undefined;
 let unusedDiagnostics: vscode.DiagnosticCollection;
+let lastUnusedAssets: UnusedAssetEntry[] = [];
 
 export function activate(context: vscode.ExtensionContext): void {
   outputChannel = vscode.window.createOutputChannel('Flutter Generate Assets');
@@ -44,6 +45,11 @@ export function activate(context: vscode.ExtensionContext): void {
     () => runFindUnused()
   );
 
+  const deleteUnusedCommand = vscode.commands.registerCommand(
+    'flutter-generate-assets.deleteUnused',
+    () => runDeleteUnused()
+  );
+
   const buildRunnerCommand = vscode.commands.registerCommand(
     'flutter-generate-assets.buildRunner',
     () => runBuildRunner()
@@ -65,6 +71,7 @@ export function activate(context: vscode.ExtensionContext): void {
     toggleWatchCommand,
     toggleHoverPreviewCommand,
     findUnusedCommand,
+    deleteUnusedCommand,
     buildRunnerCommand,
     hoverDisposable,
   );
@@ -114,6 +121,7 @@ async function runFindUnused(): Promise<void> {
   }
 
   const unused = findUnusedAssets(workspaceRoot, config.className, generatedFilePath);
+  lastUnusedAssets = unused;
   unusedDiagnostics.clear();
 
   if (unused.length === 0) {
@@ -150,8 +158,55 @@ async function runFindUnused(): Promise<void> {
   outputChannel.show(true);
 
   vscode.window.showWarningMessage(
-    `Flutter Generate Assets: ${unused.length} unused asset(s) found — see Problems panel`
+    `Flutter Generate Assets: ${unused.length} unused asset(s) found — run "Flutter: Delete Unused Assets" to remove them`
   );
+}
+
+async function runDeleteUnused(): Promise<void> {
+  if (lastUnusedAssets.length === 0) {
+    vscode.window.showInformationMessage(
+      'Flutter Generate Assets: Run "Flutter: Find Unused Assets" first'
+    );
+    return;
+  }
+
+  const workspaceRoot = vscode.workspace.workspaceFolders?.[0]?.uri.fsPath;
+  if (!workspaceRoot) return;
+
+  // Collect main files + resolution variants for each unused asset
+  const toDelete: string[] = [];
+  for (const { assetPath } of lastUnusedAssets) {
+    toDelete.push(assetPath);
+    const variants = findResolutionVariants(workspaceRoot, assetPath);
+    toDelete.push(...variants);
+  }
+
+  const confirmed = await vscode.window.showWarningMessage(
+    `Delete ${toDelete.length} file(s)? This cannot be undone.`,
+    { modal: true, detail: toDelete.join('\n') },
+    'Delete'
+  );
+  if (confirmed !== 'Delete') return;
+
+  let deleted = 0;
+  for (const rel of toDelete) {
+    try {
+      fs.unlinkSync(path.join(workspaceRoot, rel));
+      deleted++;
+      outputChannel.appendLine(`[flutter-generate-assets] Deleted: ${rel}`);
+    } catch (err) {
+      outputChannel.appendLine(`[flutter-generate-assets] Failed to delete ${rel}: ${err}`);
+    }
+  }
+
+  lastUnusedAssets = [];
+  unusedDiagnostics.clear();
+  outputChannel.show(true);
+
+  vscode.window.showInformationMessage(`Flutter Generate Assets: Deleted ${deleted} file(s)`);
+
+  // Regenerate constants file to reflect deleted assets
+  await runGenerate();
 }
 
 function runBuildRunner(): void {
@@ -198,8 +253,9 @@ export async function runGenerate(): Promise<void> {
       }
       fs.writeFileSync(outputPath, code, 'utf-8');
 
-      // Clear stale unused diagnostics when file is regenerated
+      // Clear stale unused diagnostics and results when file is regenerated
       unusedDiagnostics.clear();
+      lastUnusedAssets = [];
 
       outputChannel.appendLine(
         `[flutter-generate-assets] Generated ${config.output} (${assets.length} assets)`
