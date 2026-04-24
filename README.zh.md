@@ -4,6 +4,8 @@
 
 一个 VSCode 插件，从 Flutter 项目的 `pubspec.yaml` 中自动生成 Dart 资源常量文件。
 
+> 同时提供 **Dart CLI 工具**：[generate_assets](https://github.com/ceeyang/generate_assets) — 通过 `dart run generate_assets` 提供相同功能，无需 VSCode。
+
 ## 功能特性
 
 - **手动触发** — 通过命令面板、状态栏或右键菜单触发生成

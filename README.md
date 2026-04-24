@@ -4,6 +4,8 @@
 
 A VSCode extension that generates Dart asset constants from your Flutter project's `pubspec.yaml`.
 
+> Also available as a **Dart CLI tool**: [generate_assets](https://github.com/ceeyang/generate_assets) — provides the same functionality via `dart run generate_assets` without VSCode.
+
 ## Features
 
 - **Manual trigger** — run from the command palette, status bar, or context menu
