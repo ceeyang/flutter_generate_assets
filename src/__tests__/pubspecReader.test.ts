@@ -21,6 +21,34 @@ flutter:
     expect(config.output).toBe('lib/generated/assets.dart');
     expect(config.className).toBe('Assets');
     expect(config.assetPaths).toEqual(['assets/images/']);
+    expect(config.stripPrefixes).toEqual(['assets/']);
+  });
+
+  it('reads single strip_prefix string', () => {
+    mockReadFileSync.mockReturnValue(`
+flutter_generate_assets:
+  strip_prefix: images/
+flutter:
+  assets:
+    - images/
+`);
+    const config = readPubspec('/workspace');
+    expect(config.stripPrefixes).toEqual(['images/']);
+  });
+
+  it('reads strip_prefix as a list', () => {
+    mockReadFileSync.mockReturnValue(`
+flutter_generate_assets:
+  strip_prefix:
+    - assets/
+    - images/
+flutter:
+  assets:
+    - assets/
+    - images/
+`);
+    const config = readPubspec('/workspace');
+    expect(config.stripPrefixes).toEqual(['assets/', 'images/']);
   });
 
   it('reads custom output and class_name from root flutter_generate_assets', () => {

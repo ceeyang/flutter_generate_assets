@@ -1,8 +1,16 @@
-export function toVariableName(filePath: string, includeExt = false): string {
-  // Strip leading 'assets/' prefix
-  const withoutPrefix = filePath.startsWith('assets/')
-    ? filePath.slice('assets/'.length)
-    : filePath;
+export function toVariableName(
+  filePath: string,
+  includeExt = false,
+  stripPrefixes: string[] = ['assets/'],
+): string {
+  // Strip the first matching prefix
+  let withoutPrefix = filePath;
+  for (const prefix of stripPrefixes) {
+    if (filePath.startsWith(prefix)) {
+      withoutPrefix = filePath.slice(prefix.length);
+      break;
+    }
+  }
   // Extract extension (without the dot)
   const extMatch = withoutPrefix.match(/\.([^/.]+)$/);
   const ext = extMatch ? extMatch[1] : '';
@@ -19,14 +27,18 @@ export function toVariableName(filePath: string, includeExt = false): string {
   return /^\d/.test(camel) ? 'a' + camel : camel;
 }
 
-export function generateDartCode(className = 'Assets', assets: string[]): string {
-  // Deduplicate paths — guard against scanner returning the same path twice
+export function generateDartCode(
+  className = 'Assets',
+  assets: string[],
+  stripPrefixes: string[] = ['assets/'],
+): string {
+  // Deduplicate paths
   const uniqueAssets = [...new Set(assets)];
 
   // First pass: detect which base names (without ext) have collisions
   const baseCounts = new Map<string, number>();
   for (const assetPath of uniqueAssets) {
-    const base = toVariableName(assetPath, false);
+    const base = toVariableName(assetPath, false, stripPrefixes);
     baseCounts.set(base, (baseCounts.get(base) ?? 0) + 1);
   }
 
@@ -45,11 +57,9 @@ export function generateDartCode(className = 'Assets', assets: string[]): string
   ];
 
   for (const assetPath of uniqueAssets) {
-    const base = toVariableName(assetPath, false);
-    // Use extension in name only when there's a collision on the base name
+    const base = toVariableName(assetPath, false, stripPrefixes);
     const useExt = (baseCounts.get(base) ?? 1) > 1;
-    let varName = toVariableName(assetPath, useExt);
-    // Fallback numeric suffix for any remaining collisions (e.g. identical paths)
+    let varName = toVariableName(assetPath, useExt, stripPrefixes);
     if (seen.has(varName)) {
       let count = seen.get(varName)! + 1;
       let candidate = varName + count;

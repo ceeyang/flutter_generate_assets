@@ -244,7 +244,7 @@ export async function runGenerate(): Promise<void> {
 
     try {
       const assets = scanAssets(workspaceRoot, config.assetPaths);
-      const code = generateDartCode(config.className, assets);
+      const code = generateDartCode(config.className, assets, config.stripPrefixes);
 
       const outputPath = path.join(workspaceRoot, config.output);
       const outputDir = path.dirname(outputPath);

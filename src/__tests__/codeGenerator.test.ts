@@ -36,7 +36,20 @@ describe('toVariableName', () => {
   it('converts spaces in filename to camelCase', () => {
     expect(toVariableName('assets/artboard copy.json')).toBe('artboardCopy');
   });
+
+  it('strips custom single prefix', () => {
+    expect(toVariableName('images/logo.png', false, ['images/'])).toBe('logo');
+  });
+
+  it('strips first matching prefix from list', () => {
+    expect(toVariableName('images/icons/arrow.svg', false, ['assets/', 'images/'])).toBe('iconsArrow');
+  });
+
+  it('falls back to full path when no prefix matches', () => {
+    expect(toVariableName('resources/logo.png', false, ['assets/'])).toBe('resourcesLogo');
+  });
 });
+
 
 describe('generateDartCode', () => {
   it('includes the generated file header', () => {
@@ -108,5 +121,16 @@ describe('generateDartCode', () => {
   it('uses provided class name correctly', () => {
     const code = generateDartCode('Assets', ['assets/images/logo.png']);
     expect(code).toContain('class Assets {');
+  });
+
+  it('strips custom prefix in generated output', () => {
+    const code = generateDartCode('Assets', ['images/logo.png'], ['images/']);
+    expect(code).toContain("  static const String logo = 'images/logo.png';");
+  });
+
+  it('path value in generated output is always the original path', () => {
+    const code = generateDartCode('Assets', ['images/icons/arrow.svg'], ['images/']);
+    expect(code).toContain("= 'images/icons/arrow.svg'");
+    expect(code).toContain('static const String iconsArrow');
   });
 });

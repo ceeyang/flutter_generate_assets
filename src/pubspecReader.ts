@@ -6,6 +6,7 @@ export interface PubspecConfig {
   output: string;
   className: string;
   assetPaths: string[];
+  stripPrefixes: string[];
 }
 
 export function readPubspec(workspaceRoot: string): PubspecConfig {
@@ -14,17 +15,24 @@ export function readPubspec(workspaceRoot: string): PubspecConfig {
   const doc = yaml.load(content) as Record<string, unknown>;
 
   const flutter = (doc?.flutter as Record<string, unknown>) ?? {};
-  const generateAssets = (doc?.flutter_generate_assets as Record<string, unknown>) ?? {};
+  const cfg = (doc?.flutter_generate_assets as Record<string, unknown>) ?? {};
 
   const rawAssets = flutter?.assets;
+  const rawStrip = cfg.strip_prefix;
+
+  let stripPrefixes: string[];
+  if (Array.isArray(rawStrip)) {
+    stripPrefixes = rawStrip.map(String);
+  } else if (typeof rawStrip === 'string') {
+    stripPrefixes = [rawStrip];
+  } else {
+    stripPrefixes = ['assets/'];
+  }
 
   return {
-    output: typeof generateAssets.output === 'string'
-      ? generateAssets.output
-      : 'lib/generated/assets.dart',
-    className: typeof generateAssets.class_name === 'string'
-      ? generateAssets.class_name
-      : 'Assets',
+    output: typeof cfg.output === 'string' ? cfg.output : 'lib/generated/assets.dart',
+    className: typeof cfg.class_name === 'string' ? cfg.class_name : 'Assets',
     assetPaths: Array.isArray(rawAssets) ? (rawAssets as string[]) : [],
+    stripPrefixes,
   };
 }
